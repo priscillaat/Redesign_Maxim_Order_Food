@@ -1003,4 +1003,4 @@ function bukaPeta() {
     }, 100);
 }
 
-function tutupPeta() { showPage('page-lokasi'); } 
+function tutupPeta() { showPage('page-lokasi'); }
