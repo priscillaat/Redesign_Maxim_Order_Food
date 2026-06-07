@@ -254,12 +254,10 @@ function goToPromo() {
     showPage('page-promo'); 
 }
 
-// REVISI: Mengembalikan pengguna secara langsung ke halaman utama pesan makanan
 function goBackFromPromo() { 
     goToHome(); 
 }
 
-// REVISI: Hanya menampilkan promo yang tersedia dan belum digunakan
 function renderPromos() {
     const container = document.getElementById('promo-list-container');
     container.innerHTML = '';
@@ -267,7 +265,6 @@ function renderPromos() {
     let visibleCount = 0;
 
     allPromos.forEach(p => {
-        // Hilangkan dari tampilan jika sudah digunakan ATAU statusnya expired (tidak tersedia)
         if (usedPromos.includes(p.id) || p.status === 'expired') return;
         
         visibleCount++;
