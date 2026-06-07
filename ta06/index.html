@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maxim Food App</title>
+    <title>Maxim Food App - Revisi</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,8 +11,6 @@
 <body>
 
 <div class="app">
-    <div id="toast-container" class="toast-container"></div>
-
     <div id="page-login" class="page sign-in-page">
         <div class="logo-container-signin">
             <img src="../logo maxim.png" alt="Maxim Logo" style="height: 45px;">
@@ -165,9 +163,21 @@
                 </div>
                 <span class="profil-arrow">›</span>
             </div>
-            <div class="profil-item" onclick="showPage('page-bantuan')">
-                <span class="profil-icon">❓</span>
-                <div class="profil-info"><p class="profil-label">Bantuan & Laporan</p><p class="profil-value" style="color: #ccc;">Pusat FAQ</p></div><span class="profil-arrow">›</span>
+            <div class="profil-item">
+                <span class="profil-icon">🚻</span>
+                <div class="profil-info"><p class="profil-label">Jenis kelamin</p><p class="profil-value" style="color: #ccc;">Data belum diisi</p></div><span class="profil-arrow">›</span>
+            </div>
+            <div class="profil-item">
+                <span class="profil-icon">📅</span>
+                <div class="profil-info"><p class="profil-label">Tanggal lahir</p><p class="profil-value" style="color: #ccc;">Data belum diisi</p></div><span class="profil-arrow">›</span>
+            </div>
+            <div class="profil-item">
+                <span class="profil-icon">✉️</span>
+                <div class="profil-info"><p class="profil-label">Email</p><p class="profil-value" style="color: #ccc;">Data belum diisi</p></div><span class="profil-arrow">›</span>
+            </div>
+            <div class="profil-item" onclick="goToBantuan()">
+                <span class="profil-icon">ℹ️</span>
+                <div class="profil-info"><p class="profil-value" style="font-size: 15px;">Pusat Bantuan</p></div><span class="profil-arrow">›</span>
             </div>
             <div class="profil-item">
                 <span class="profil-icon">🚨</span>
@@ -177,17 +187,15 @@
     </div>
 
     <div id="page-bantuan" class="page bg-black-full">
-        <div class="header-black" style="padding-bottom: 20px; border-bottom: 1px solid #333;">
-            <div class="top-bar-header" style="align-items: center;">
-                <span class="back-btn" onclick="showPage('page-profil')" style="margin: 0; font-size: 24px;">←</span>
-                <div class="page-title" style="margin-left: 15px; font-size: 18px;">PUSAT BANTUAN</div>
-            </div>
+        <div style="display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #222; background: #1a1a1a;">
+            <span class="back-btn" onclick="goBackToProfil()" style="margin: 0; font-size: 24px; color: #ccc;">&lt;</span>
+            <h2 style="font-size: 18px; font-weight: normal; margin: 0; color: #fff; margin-left: 20px;">Pusat Bantuan</h2>
         </div>
-        <div style="padding: 20px; color: #ccc; line-height: 1.6;">
-            <h3 style="color: #fff; margin-bottom: 10px;">FAQ</h3>
-            <p><b>Q: Bagaimana cara membatalkan pesanan?</b><br>A: Anda dapat membatalkan pesanan saat sistem sedang mencarikan driver melalui tombol di menu tracking.</p><br>
-            <p><b>Q: Kenapa tidak bisa Proses Pesanan?</b><br>A: Pastikan Anda telah mengisi Alamat Pengiriman terlebih dahulu di halaman Checkout.</p><br>
-            <p><b>Q: Bagaimana cara menggunakan promo?</b><br>A: Masuk ke Checkout, klik "Pilih Kode Promo Disini", lalu tap pada kartu promo yang Tersedia.</p>
+        <div class="profil-list">
+            <div class="profil-item"><div class="profil-info"><p class="profil-value">Cara Memesan Makanan</p></div><span class="profil-arrow">›</span></div>
+            <div class="profil-item"><div class="profil-info"><p class="profil-value">Masalah dengan Pesanan</p></div><span class="profil-arrow">›</span></div>
+            <div class="profil-item"><div class="profil-info"><p class="profil-value">Pembayaran & Promo</p></div><span class="profil-arrow">›</span></div>
+            <div class="profil-item"><div class="profil-info"><p class="profil-value">Hubungi Customer Service</p></div><span class="profil-arrow">›</span></div>
         </div>
     </div>
 
@@ -253,12 +261,7 @@
             <div class="chip" id="btn-harga-tinggi" onclick="toggleFilter('harga-tinggi')">Harga Tinggi</div>
             <div class="chip" id="btn-harga-rendah" onclick="toggleFilter('harga-rendah')">Harga Rendah</div>
         </div>
-        
-        <div id="no-result" style="display:none; text-align:center; padding: 40px 20px;">
-            <p style="color:#aaa; font-size: 15px; margin-bottom: 15px;">Maaf, makanan atau resto yang Anda cari tidak ditemukan.</p>
-            <button onclick="document.getElementById('search-input').value=''; filterProduk();" style="background:#222; color:#ffeb00; border:1px solid #ffeb00; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">Hapus Pencarian</button>
-        </div>
-        
+        <p id="no-result" style="display:none; text-align:center; color:#888; margin-top:20px;">Maaf, makanan atau resto yang Anda cari tidak ditemukan.</p>
         <div id="results-wrapper"></div>
     </div>
 
@@ -266,14 +269,25 @@
         <div style="padding: 20px;">
             <div class="header-search" style="border-bottom: 1px solid #333; margin-bottom: 25px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <span class="back-btn" onclick="goBackFromPromo()" style="margin-top: 0; font-size: 24px;">←</span>
+                    <span class="back-btn" onclick="goToHome()" style="margin-top: 0; font-size: 24px;">←</span>
                     <h1 style="color: #fff; font-size: 20px; margin: 0;">KODE PROMO</h1>
                 </div>
             </div>
-            
-            <p style="color: #aaa; font-size: 12px; margin-bottom: 15px;">Klik pada kartu promo yang Tersedia untuk menerapkannya ke pesanan Anda.</p>
-            <div id="promo-list-container"></div>
-            
+            <div class="promo-card-item">
+                <span class="promo-label">🏷️ DISKON RP 20.000</span>
+                <div class="promo-code-box">MAXIM20</div>
+                <div class="status berlaku">MASIH BERLAKU</div>
+            </div>
+            <div class="promo-card-item">
+                <span class="promo-label">🏷️ DISKON RP 15.000</span>
+                <div class="promo-code-box">MAXIM15</div>
+                <div class="status berlaku">MASIH BERLAKU</div>
+            </div>
+            <div class="promo-card-item">
+                <span class="promo-label">🏷️ DISKON RP 10.000</span>
+                <div class="promo-code-box">MAXIM10</div>
+                <div class="status berlaku">MASIH BERLAKU</div>
+            </div>
         </div>
     </div>
 
@@ -344,7 +358,7 @@
             
             <div class="address-box-co" onclick="goToLokasi()">
                 <span style="color: #ff5252; font-size: 15px;">📍</span>
-                <span id="checkout-address-text" style="color: #ccc; font-size: 13px;">Pilih Lokasi Pengiriman...</span>
+                <span id="checkout-address-text" style="color: #ccc; font-size: 13px;">Pilih Lokasi Pengantaran (Wajib)</span>
             </div>
         </div>
         
@@ -368,19 +382,24 @@
             </div>
             <div>
                 <div class="promo-header">% KODE PROMO</div>
-                <div id="btn-pilih-promo" onclick="goToPromo()" style="background: #222; border: 1px solid #444; border-radius: 10px; padding: 15px; color: #ffeb00; font-weight: bold; text-align: center; cursor: pointer;">
-                    Pilih Kode Promo Disini
+                <div class="promo-input-row">
+                    <select id="promo-select" class="promo-input" onchange="applyPromo()">
+                        <option value="0">Pilih Promo...</option>
+                        <option value="20000">MAXIM20 - Diskon Rp 20.000</option>
+                        <option value="15000">MAXIM15 - Diskon Rp 15.000</option>
+                        <option value="10000">MAXIM10 - Diskon Rp 10.000</option>
+                    </select>
                 </div>
-                <div class="promo-success" id="promo-success-msg" style="display: none;">✔️ Promo berhasil! Hemat Rp.0</div>
+                <div class="promo-success" id="promo-success-msg">✔️ Promo berhasil!</div>
             </div>
             <div>
                 <div class="summary-title">Ringkasan Pesanan</div>
                 <div class="summary-row"><span id="co-qty-text">Subtotal</span><span id="co-subtotal">Rp. 0</span></div>
                 <div class="summary-row"><span>Ongkos kirim</span><span id="co-ongkir">Rp. 8.000</span></div>
-                <div class="summary-row discount" id="summary-discount"><span>Diskon Promo</span><span id="co-diskon-text" style="color: #fff;">-Rp. 0</span></div>
+                <div class="summary-row discount" id="summary-discount"><span>Diskon Promo</span><span id="co-discount-text" style="color: #fff;">-Rp. 0</span></div>
                 <div class="total-row"><span>TOTAL BAYAR</span><span id="co-total-bayar">Rp. 0</span></div>
             </div>
-            <button id="btn-proses-pesanan" class="btn-lanjut-bayar" onclick="goToTracking()" disabled style="opacity: 0.5; cursor: not-allowed;">PROSES PESANAN →</button>
+            <button class="btn-lanjut-bayar" onclick="goToTracking()">PROSES PESANAN →</button>
         </div>
     </div>
 
@@ -409,6 +428,21 @@
 
         <div class="bg-black-full" style="padding: 0; min-height: 80vh;">
             <div class="lokasi-history-container">
+                <div class="lokasi-item" onclick="pilihLokasi('Rumah - Jl. Kenangan No. 12', -6.210, 106.800)">
+                    <div class="lokasi-icon fav">⭐</div>
+                    <div class="lokasi-text">
+                        <h4>Rumah</h4>
+                        <p>Jl. Kenangan No. 12</p>
+                    </div>
+                </div>
+                <div class="lokasi-item" onclick="pilihLokasi('Kantor - Gedung Cyber 2', -6.225, 106.832)">
+                    <div class="lokasi-icon fav">⭐</div>
+                    <div class="lokasi-text">
+                        <h4>Kantor</h4>
+                        <p>Gedung Cyber 2</p>
+                    </div>
+                </div>
+
                 <div class="lokasi-item" onclick="dapatkanLokasiAsli()">
                     <div class="lokasi-icon" style="background: #FFFF00; color: #000;">📍</div>
                     <div class="lokasi-text">
@@ -416,21 +450,19 @@
                         <p id="teks-lokasi-asli">Klik untuk mendeteksi lokasi otomatis...</p>
                     </div>
                 </div>
-                <div class="lokasi-item">
+                <div class="lokasi-item" onclick="pilihLokasi('Binus University, Lobby basement', -6.202, 106.781)">
                     <div class="lokasi-icon" style="background: #fff; color: #000;">🕒</div>
-                    <div class="lokasi-text" onclick="pilihLokasi('Binus University, Lobby basement', -6.202, 106.781)" style="flex:1;">
+                    <div class="lokasi-text">
                         <h4>Binus University</h4>
                         <p>Lobby basement</p>
                     </div>
-                    <span class="fav-icon" onclick="toggleFav(this, event)" style="font-size: 24px; color: #ccc; cursor: pointer; padding: 10px;">☆</span>
                 </div>
-                <div class="lokasi-item">
+                <div class="lokasi-item" onclick="pilihLokasi('kost binus jaya, JL. Palmerah barat No.3', -6.205, 106.785)">
                     <div class="lokasi-icon" style="background: #fff; color: #000;">🕒</div>
-                    <div class="lokasi-text" onclick="pilihLokasi('kost binus jaya, JL. Palmerah barat No.3', -6.205, 106.785)" style="flex:1;">
+                    <div class="lokasi-text">
                         <h4>kost binus jaya</h4>
                         <p>JL. Palmerah barat No.3</p>
                     </div>
-                    <span class="fav-icon" onclick="toggleFav(this, event)" style="font-size: 24px; color: #ccc; cursor: pointer; padding: 10px;">☆</span>
                 </div>
             </div>
         </div>
@@ -467,7 +499,6 @@
                     <div class="prog-line" id="prog-line-3"></div>
                     <div class="prog-step" id="prog-step-4">🏠</div>
                 </div>
-                <button id="btn-batal-pesanan" onclick="batalPesanan()" style="width: 100%; background-color: #ff4444; color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; margin-bottom: 15px; display: block;">Batalkan Pesanan</button>
             </div>
 
             <div id="tracking-state-2" style="display: none; margin-bottom: 20px;">
@@ -491,6 +522,8 @@
             </div>
 
             <div id="tracking-food-item" style="margin-top: 15px;"></div>
+            
+            <button id="btn-cancel-order" class="btn-hapus-semua" style="width: 100%; margin-top: 25px; padding: 15px; font-size: 14px; display: none;" onclick="cancelOrder()">Batalkan Pesanan</button>
         </div>
     </div>
 

@@ -11,24 +11,14 @@ const allRestaurants = [
     { id: 10, name: "Warkop Tjap Cobra", distance: 0.5, rating: 3.5, sold: 86, menuSold: 36, food: "Kopi Hitam", price: 8000, imgResto: "../Warkop Tjap Cobra.png", imgFood: "../Kopi hitam.png" }
 ];
 
-// REVISI: Data Promo Dinamis + 1 Promo Expired
-const allPromos = [
-    { id: 'MAXIM20', title: '🏷️ DISKON 20%', desc: 'Potongan maksimal Rp. 12.000', discount: 12000, status: 'available' },
-    { id: 'MAXIM30', title: '🏷️ POTONGAN FLAT', desc: 'Potongan langsung Rp. 30.000', discount: 30000, status: 'available' },
-    { id: 'MAXIM10', title: '🏷️ POTONGAN FLAT', desc: 'Potongan langsung Rp. 10.000', discount: 10000, status: 'available' },
-    { id: 'MAXIM50', title: '🏷️ PROMO SPESIAL', desc: 'Potongan Rp. 50.000 (Kadaluarsa)', discount: 50000, status: 'expired' }
-];
-
-let usedPromos = []; // Menyimpan promo yang sudah dipakai pesanan selesai
 let cart = {}; 
 let isPromoApplied = false;
-let appliedPromoAmount = 0; 
-let appliedPromoCode = ""; 
-let isAddressSelected = false; // Validasi lokasi wajib
+let promoDiscountAmount = 0; // REVISI: Besaran promo
 let selectedPayment = 'tunai';
 let currentDetailId = null; 
 let activeFilters = { terdekat: false, rating: null, harga: null };
 let currentCheckoutResto = null; 
+let isLocationSelected = false; // REVISI: Wajib isi lokasi
 
 let notifData = [];
 let unreadNotifCount = 0;
@@ -38,7 +28,6 @@ let userLng = 106.7810;
 let trackingMap;
 let trackingDriverMarker;
 let trackingAnimationInterval;
-let trackingTimeouts = []; 
 let userName = '';
 let userPhone = '';
 let correctOTP = '';
@@ -47,6 +36,7 @@ let typeInterval;
 let typeTimeout;
 let resendInterval;
 let timeLeft = 10; 
+
 let isOrderActive = false;
 
 window.onload = () => {
@@ -61,18 +51,7 @@ window.onload = () => {
         showPage('page-login');
     }
     renderHomeList(allRestaurants);
-    renderPromos(); // Render awal promo
 };
-
-// REVISI: Fungsi Toast Notifikasi Visual Keranjang
-function showToast(message) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast-msg';
-    toast.innerText = message;
-    container.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 3000);
-}
 
 function openPrivacyModal() { document.getElementById('privacy-modal').style.display = 'flex'; }
 function closePrivacyModal() { document.getElementById('privacy-modal').style.display = 'none'; }
@@ -83,13 +62,17 @@ function goToProfil() {
     showPage('page-profil');
 }
 
+// REVISI: Bantuan Menu
+function goToBantuan() { showPage('page-bantuan'); }
+function goBackToProfil() { showPage('page-profil'); }
+
 function goBackToActivity() {
     showPage('page-activity');
     startTypewriter(); 
 }
 
 function logoutApp() {
-    if(confirm("Apakah Anda yakin ingin logout?")) {
+    if(confirm("Apakah Anda yakin ingin logout? (Ini akan mengeluarkan akun dari sistem)")) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userName');
         localStorage.removeItem('userPhone');
@@ -105,15 +88,23 @@ function goBackToActivityFromHome() {
 function requestOTP() {
     userName = document.getElementById('login-name').value.trim();
     userPhone = document.getElementById('login-phone').value.trim();
+    
     if(!userName) { alert('Silakan masukkan nama panggilan Anda.'); return; }
     if(!userPhone || userPhone.length < 8) { alert('Silakan masukkan nomor telepon yang valid.'); return; }
+
     document.getElementById('otp-phone-display').innerText = '+62 ' + userPhone;
     correctOTP = Math.floor(1000 + Math.random() * 9000).toString();
+    
     showPage('page-otp');
-    document.getElementById('otp1').value = ''; document.getElementById('otp2').value = ''; document.getElementById('otp3').value = ''; document.getElementById('otp4').value = '';
+    document.getElementById('otp1').value = '';
+    document.getElementById('otp2').value = '';
+    document.getElementById('otp3').value = '';
+    document.getElementById('otp4').value = '';
     document.getElementById('otp1').focus();
+
     document.getElementById('generated-otp').innerText = correctOTP;
     document.getElementById('otp-popup').style.display = 'block';
+    
     setTimeout(() => { document.getElementById('otp-popup').style.display = 'none'; }, 10000); 
     startResendTimer();
 }
@@ -124,6 +115,7 @@ function startResendTimer() {
     document.getElementById('resend-text').style.display = 'block';
     document.getElementById('resend-btn').style.display = 'none';
     document.getElementById('resend-timer').innerText = timeLeft;
+
     resendInterval = setInterval(() => {
         timeLeft--;
         document.getElementById('resend-timer').innerText = timeLeft;
@@ -139,31 +131,46 @@ function resendOTP() {
     correctOTP = Math.floor(1000 + Math.random() * 9000).toString();
     document.getElementById('generated-otp').innerText = correctOTP;
     document.getElementById('otp-popup').style.display = 'block';
-    document.getElementById('otp1').value = ''; document.getElementById('otp2').value = ''; document.getElementById('otp3').value = ''; document.getElementById('otp4').value = '';
+    
+    document.getElementById('otp1').value = '';
+    document.getElementById('otp2').value = '';
+    document.getElementById('otp3').value = '';
+    document.getElementById('otp4').value = '';
     document.getElementById('otp1').focus();
     startResendTimer();
+
     setTimeout(() => { document.getElementById('otp-popup').style.display = 'none'; }, 10000);
 }
 
 function moveToNext(current, nextFieldID) {
     if (current.value.length >= current.maxLength) {
-        if(nextFieldID) { document.getElementById(nextFieldID).focus(); } else { verifyOTP(); }
+        if(nextFieldID) { document.getElementById(nextFieldID).focus(); } 
+        else { verifyOTP(); }
     }
 }
 
 function verifyOTP() {
-    let enteredOTP = document.getElementById('otp1').value + document.getElementById('otp2').value + document.getElementById('otp3').value + document.getElementById('otp4').value;
+    let input1 = document.getElementById('otp1').value;
+    let input2 = document.getElementById('otp2').value;
+    let input3 = document.getElementById('otp3').value;
+    let input4 = document.getElementById('otp4').value;
+    let enteredOTP = input1 + input2 + input3 + input4;
+    
     if(enteredOTP.length === 4) {
         if(enteredOTP === correctOTP) {
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('userName', userName);
             localStorage.setItem('userPhone', userPhone); 
+
             document.getElementById('otp-popup').style.display = 'none';
             showPage('page-activity');
             startTypewriter();
         } else {
             alert('Kode OTP salah. Silakan coba lagi.');
-            document.getElementById('otp1').value = ''; document.getElementById('otp2').value = ''; document.getElementById('otp3').value = ''; document.getElementById('otp4').value = '';
+            document.getElementById('otp1').value = '';
+            document.getElementById('otp2').value = '';
+            document.getElementById('otp3').value = '';
+            document.getElementById('otp4').value = '';
             document.getElementById('otp1').focus();
         }
     }
@@ -174,12 +181,15 @@ function startTypewriter() {
     const targetElement = document.getElementById('typewriter-text');
     targetElement.innerHTML = '';
     let i = 0;
+    
     if(typeInterval) clearInterval(typeInterval);
     if(typeTimeout) clearTimeout(typeTimeout);
     if(!document.getElementById('page-activity').classList.contains('active')) return;
+
     typeInterval = setInterval(() => {
         if (i < text.length) {
-            targetElement.innerHTML += text.charAt(i); i++;
+            targetElement.innerHTML += text.charAt(i);
+            i++;
         } else {
             clearInterval(typeInterval);
             typeTimeout = setTimeout(() => { startTypewriter(); }, 3000);
@@ -224,96 +234,32 @@ function goToHome() {
     resetFilter();
 
     const banner = document.getElementById('active-order-banner');
-    if (isOrderActive) banner.style.display = 'flex';
-    else banner.style.display = 'none';
+    if (isOrderActive) {
+        banner.style.display = 'flex';
+    } else {
+        banner.style.display = 'none';
+    }
 }
 
-function returnToTracking() { showPage('tracking-page'); }
-function goToCart() { showPage('cart-page'); renderCartPage(); }
+function returnToTracking() {
+    showPage('tracking-page');
+}
+
+function goToCart() { 
+    showPage('cart-page'); renderCartPage(); 
+}
 
 function goToCheckout(restoName) { 
     if(restoName) currentCheckoutResto = restoName;
-    
-    // Validasi Button (Heuristik 5)
-    let btnProses = document.getElementById('btn-proses-pesanan');
-    if (isAddressSelected) {
-        btnProses.disabled = false;
-        btnProses.style.opacity = '1';
-        btnProses.style.cursor = 'pointer';
-    } else {
-        btnProses.disabled = true;
-        btnProses.style.opacity = '0.5';
-        btnProses.style.cursor = 'not-allowed';
-    }
-
+    isPromoApplied = false;
+    promoDiscountAmount = 0;
+    document.getElementById('promo-select').value = "0";
+    document.getElementById('promo-success-msg').style.display = 'none';
     showPage('checkout-page'); 
     renderCheckoutPage(); 
 }
-
 function goToLokasi() { showPage('page-lokasi'); }
-
-function goToPromo() { 
-    lastPageSebelumNotif = 'checkout-page'; 
-    showPage('page-promo'); 
-}
-
-function goBackFromPromo() { showPage('checkout-page'); }
-
-// REVISI: Render Promo + Hapus Promo Dipakai + Label Tersedia
-function renderPromos() {
-    const container = document.getElementById('promo-list-container');
-    container.innerHTML = '';
-    
-    let visibleCount = 0;
-
-    allPromos.forEach(p => {
-        // Hilangkan dari tampilan jika sudah digunakan
-        if (usedPromos.includes(p.id)) return;
-        
-        visibleCount++;
-        let isExpired = p.status === 'expired';
-        
-        let statusHTML = isExpired 
-            ? `<div style="background:#f2f2f2; color:#888; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; border:1px solid #aaa;">TIDAK TERSEDIA</div>`
-            : `<div style="background:#eafaf1; color:#2ecc71; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; border:1px solid #2ecc71;">TERSEDIA</div>`;
-        
-        let onClickHTML = isExpired ? `` : `onclick="applyPromoSelection('${p.id}', ${p.discount})"`;
-        let cursorStyle = isExpired ? `cursor: default; opacity: 0.6; filter: grayscale(100%);` : `cursor: pointer;`;
-
-        container.innerHTML += `
-        <div class="promo-card-item" style="${cursorStyle} margin-bottom:15px;" ${onClickHTML}>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <span class="promo-label" style="color:${isExpired ? '#888' : '#ffeb00'}">${p.title}</span>
-                    <div class="promo-code-box" style="padding: 10px; font-size: 20px; color:${isExpired ? '#888' : '#fff'};">${p.id}</div>
-                    <p style="color: #aaa; font-size: 12px; margin: 0;">${p.desc}</p>
-                </div>
-                ${statusHTML}
-            </div>
-        </div>`;
-    });
-
-    if(visibleCount === 0) {
-        container.innerHTML = `<p style="text-align:center; color:#888; margin-top:30px;">Tidak ada promo yang tersedia.</p>`;
-    }
-}
-
-// REVISI: Logika "Pilih" bukan "Ketik"
-function applyPromoSelection(code, discountValue) {
-    isPromoApplied = true;
-    appliedPromoAmount = discountValue;
-    appliedPromoCode = code; 
-
-    document.getElementById('btn-pilih-promo').innerText = `✅ Promo Terpakai: ${code}`;
-    document.getElementById('btn-pilih-promo').style.color = '#34c759';
-    document.getElementById('btn-pilih-promo').style.borderColor = '#34c759';
-    
-    document.getElementById('promo-success-msg').style.display = 'flex'; 
-    document.getElementById('promo-success-msg').innerText = `✔️ Promo berhasil! Hemat Rp.${discountValue.toLocaleString('id-ID')}`;
-    
-    showPage('checkout-page');
-    renderCheckoutPage(); 
-}
+function goToPromo() { showPage('page-promo'); }
 
 function goToNotifikasi() {
     showPage('page-notifikasi');
@@ -357,26 +303,11 @@ function updateNotifBadge() {
 function pilihLokasi(alamatText, lat = null, lng = null) {
     if(lat !== null && lng !== null){ userLat = lat; userLng = lng; }
     document.getElementById('checkout-address-text').innerText = "Antar ke " + alamatText;
+    document.getElementById('checkout-address-text').style.color = "#ccc"; // Resets red color if it was empty
     document.getElementById('input-cari-lokasi').value = ''; 
     document.getElementById('lokasi-suggestions').style.display = 'none'; 
-    
-    // REVISI: Aktifkan Tombol
-    isAddressSelected = true;
-    let btnProses = document.getElementById('btn-proses-pesanan');
-    btnProses.disabled = false;
-    btnProses.style.opacity = '1';
-    btnProses.style.cursor = 'pointer';
-
+    isLocationSelected = true; // REVISI: Update status lokasi dipilih
     showPage('checkout-page');
-}
-
-function toggleFav(element, event) {
-    event.stopPropagation(); 
-    if(element.innerText === '☆') {
-        element.innerText = '★'; element.style.color = '#ffeb00';
-    } else {
-        element.innerText = '☆'; element.style.color = '#ccc';
-    }
 }
 
 function searchLokasiInput(event) {
@@ -419,9 +350,15 @@ function updateFilterUI() {
     if (activeFilters.harga === 'rendah') document.getElementById('btn-harga-rendah').classList.add('active');
 }
 
+// REVISI: Perbaikan Halaman Kosong Pencarian
 function filterProduk() {
     let input = document.getElementById('search-input').value.toLowerCase().trim();
-    let filteredData = allRestaurants.filter(r => r.name.toLowerCase().includes(input) || r.food.toLowerCase().includes(input));
+    let filteredData = allRestaurants;
+
+    if(input !== '') {
+        filteredData = allRestaurants.filter(r => r.name.toLowerCase().includes(input) || r.food.toLowerCase().includes(input));
+    }
+    
     filteredData.sort((a, b) => {
         if (activeFilters.terdekat && a.distance !== b.distance) return a.distance - b.distance; 
         if (activeFilters.rating && a.rating !== b.rating) return activeFilters.rating === 'tinggi' ? b.rating - a.rating : a.rating - b.rating;
@@ -452,7 +389,6 @@ function renderSearchList(data) {
                 </div>
             </div>`;
     });
-    
     let noResultEl = document.getElementById('no-result');
     if(noResultEl) noResultEl.style.display = ada ? "none" : "block";
 }
@@ -484,18 +420,10 @@ function openDetail(id) {
 }
 
 function changeQty(amount) {
-    let currentQty = cart[currentDetailId] || 0; 
-    currentQty += amount;
-    
-    if (currentQty <= 0) delete cart[currentDetailId]; 
-    else {
-        cart[currentDetailId] = currentQty;
-        if(amount > 0) {
-            const resto = allRestaurants.find(r => r.id === currentDetailId);
-            showToast(`✔️ ${resto.food} ditambahkan`);
-        }
-    }
+    let currentQty = cart[currentDetailId] || 0; currentQty += amount;
+    if (currentQty <= 0) delete cart[currentDetailId]; else cart[currentDetailId] = currentQty;
     updateQtyUI();
+    updateCartBadge(); // Call this immediately on change to trigger animation
 }
 
 function updateQtyUI() {
@@ -508,12 +436,20 @@ function updateQtyUI() {
     } else { checkoutBar.style.display = 'none'; }
 }
 
+// REVISI: Feedback Visual Keranjang Pop Animasi
 function updateCartBadge() {
     const totalItems = Object.keys(cart).length;
     const badges = [document.getElementById('cart-badge-home'), document.getElementById('cart-badge-search')];
     badges.forEach(badge => {
         if(badge) {
-            if(totalItems > 0) { badge.style.display = 'flex'; badge.innerText = totalItems; } 
+            if(totalItems > 0) { 
+                badge.style.display = 'flex'; 
+                badge.innerText = totalItems; 
+                // Reset animation
+                badge.classList.remove('pop-anim');
+                void badge.offsetWidth; // trigger reflow
+                badge.classList.add('pop-anim');
+            } 
             else { badge.style.display = 'none'; }
         }
     });
@@ -532,8 +468,7 @@ function removeFromCart(id) {
 
 function changeQtyCart(id, amount) {
     let currentQty = cart[id] || 0; currentQty += amount;
-    if (currentQty <= 0) delete cart[id]; 
-    else cart[id] = currentQty;
+    if (currentQty <= 0) delete cart[id]; else cart[id] = currentQty;
     renderCartPage(); updateCartBadge(); if(currentDetailId == id) updateQtyUI();
 }
 
@@ -593,7 +528,7 @@ function renderCheckoutPage() {
     let subtotal = 0; let totalItems = 0;
     Object.keys(cart).forEach(id => {
         const resto = allRestaurants.find(r => r.id == id);
-        if (resto && resto.name === currentCheckoutResto) {
+        if (resto.name === currentCheckoutResto) {
             const qty = cart[id]; subtotal += (resto.price * qty); totalItems += qty;
             itemContainer.innerHTML += `
             <div class="co-item-card">
@@ -612,21 +547,23 @@ function renderCheckoutPage() {
             </div>`;
         }
     });
-    const ongkir = 8000; 
-    const diskon = isPromoApplied ? appliedPromoAmount : 0; 
-    let totalBayar = subtotal + ongkir - diskon;
-    if (totalBayar < 0) totalBayar = 0; 
     
+    const ongkir = 8000; 
+    const diskon = isPromoApplied ? promoDiscountAmount : 0; // REVISI: Mengambil besaran diskon
+    let totalBayar = subtotal + ongkir - diskon;
+    if(totalBayar < 0) totalBayar = 0;
+
     document.getElementById('co-qty-text').innerText = `Subtotal(${totalItems} item)`; 
     document.getElementById('co-subtotal').innerText = `Rp. ${subtotal.toLocaleString('id-ID')}`;
     
+    const discRow = document.getElementById('summary-discount');
     if(isPromoApplied) {
-        document.getElementById('summary-discount').style.display = 'flex';
-        document.getElementById('co-diskon-text').innerText = `-Rp. ${diskon.toLocaleString('id-ID')}`;
+        discRow.style.display = 'flex';
+        document.getElementById('co-discount-text').innerText = `-Rp. ${diskon.toLocaleString('id-ID')}`;
     } else {
-        document.getElementById('summary-discount').style.display = 'none';
+        discRow.style.display = 'none';
     }
-    
+
     document.getElementById('co-total-bayar').innerText = `Rp. ${totalBayar.toLocaleString('id-ID')}`;
 }
 
@@ -634,9 +571,22 @@ function selectPayment(method) {
     selectedPayment = method; document.getElementById('radio-kaspro').classList.remove('selected'); document.getElementById('radio-tunai').classList.remove('selected'); document.getElementById(`radio-${method}`).classList.add('selected');
 }
 
-function clearAllTrackingTimeouts() {
-    trackingTimeouts.forEach(clearTimeout);
-    trackingTimeouts = [];
+// REVISI: Pilih Promo bukan Ketik (Dropdown Handler)
+function applyPromo() {
+    const select = document.getElementById('promo-select');
+    const discount = parseInt(select.value);
+
+    if (discount > 0) {
+        isPromoApplied = true;
+        promoDiscountAmount = discount;
+        document.getElementById('promo-success-msg').innerText = `✔️ Promo berhasil! Hemat Rp.${discount.toLocaleString('id-ID')}`;
+        document.getElementById('promo-success-msg').style.display = 'flex';
+    } else {
+        isPromoApplied = false;
+        promoDiscountAmount = 0;
+        document.getElementById('promo-success-msg').style.display = 'none';
+    }
+    renderCheckoutPage();
 }
 
 function initAnimatedTrackingMap() {
@@ -669,12 +619,11 @@ function initAnimatedTrackingMap() {
 
     trackingDriverMarker = L.marker([restoLat, restoLng], {icon: driverIcon}).addTo(trackingMap).bindPopup("Driver Anda");
 
-    let t1 = setTimeout(() => {
+    setTimeout(() => {
         trackingMap.invalidateSize();
         let bounds = L.latLngBounds(waypoints);
         trackingMap.fitBounds(bounds, { padding: [20, 20] });
     }, 400);
-    trackingTimeouts.push(t1);
 
     if(trackingAnimationInterval) clearInterval(trackingAnimationInterval);
 
@@ -713,8 +662,17 @@ function initAnimatedTrackingMap() {
 }
 
 function goToTracking() {
+    // REVISI: Wajib pilih lokasi
+    if(!isLocationSelected) {
+        alert('Silakan pilih lokasi pengantaran terlebih dahulu!');
+        document.getElementById('checkout-address-text').style.color = "#ff4444";
+        return;
+    }
+
     isOrderActive = true; 
     showPage('tracking-page'); notifData = []; updateNotifBadge();
+    document.getElementById('btn-cancel-order').style.display = 'block'; // Tampilkan tombol batalkan
+
     const firstCartId = Object.keys(cart).find(id => allRestaurants.find(r => r.id == id).name === currentCheckoutResto);
     const resto = allRestaurants.find(r => r.id == firstCartId);
     const qty = cart[firstCartId] || 1;
@@ -747,43 +705,36 @@ function goToTracking() {
 }
 
 function startTrackingRealtime() {
-    clearAllTrackingTimeouts(); 
-    
     document.getElementById('tracking-title-text').innerText = "Estimasi";
     document.getElementById('tracking-state-1').style.display = 'block'; 
     document.getElementById('tracking-state-2').style.display = 'none';  
     document.getElementById('prog-step-2').classList.remove('active'); document.getElementById('prog-step-3').classList.remove('active'); document.getElementById('prog-step-4').classList.remove('active');
     document.getElementById('prog-line-2').classList.remove('active'); document.getElementById('prog-line-3').classList.remove('active');
     document.getElementById('tracking-status-text').innerText = "Mencari driver..."; document.getElementById('driver-card').style.display = 'none'; 
-    
-    document.getElementById('btn-batal-pesanan').style.display = 'block';
-    
     pushNotif('Mencari driver', 'Ⓜ️');
 
-    let t1 = setTimeout(() => {
+    setTimeout(() => {
+        if(!isOrderActive) return; // Stop jika dibatalkan
         document.getElementById('prog-step-2').classList.add('active'); document.getElementById('prog-line-2').classList.add('active'); 
         document.getElementById('tracking-status-text').innerText = "Menunggu makananmu"; document.getElementById('driver-card').style.display = 'flex'; 
-        
-        document.getElementById('btn-batal-pesanan').style.display = 'none';
-        
         pushNotif('Mendapatkan driver', '👤');
-        let t1_a = setTimeout(() => pushNotif('Driver sampai di resto', '🍴'), 1000);
-        let t1_b = setTimeout(() => pushNotif('Menunggu makananmu', '🍳'), 2000);
-        trackingTimeouts.push(t1_a, t1_b);
+        setTimeout(() => { if(isOrderActive) pushNotif('Driver sampai di resto', '🍴')}, 1000);
+        setTimeout(() => { if(isOrderActive) pushNotif('Menunggu makananmu', '🍳')}, 2000);
     }, 7000); 
 
-    let t2 = setTimeout(() => {
+    setTimeout(() => {
+        if(!isOrderActive) return; // Stop jika dibatalkan
+        document.getElementById('btn-cancel-order').style.display = 'none'; // Sembunyikan tombol batal saat driver jalan
         document.getElementById('tracking-title-text').innerText = "Tepat waktu";
         document.getElementById('tracking-state-1').style.display = 'none'; 
         document.getElementById('tracking-state-2').style.display = 'block'; 
         document.getElementById('tracking-status-text').innerText = "Driver menuju lokasi mu";
-        pushNotif('Makananmu sudah selesai', '🛎️'); 
-        let t2_a = setTimeout(() => pushNotif('Driver menuju lokasimu', '🛵'), 1000);
-        trackingTimeouts.push(t2_a);
+        pushNotif('Makananmu sudah selesai', '🛎️'); setTimeout(() => pushNotif('Driver menuju lokasimu', '🛵'), 1000);
         initAnimatedTrackingMap();
     }, 14000); 
 
-    let t3 = setTimeout(() => { 
+    setTimeout(() => { 
+        if(!isOrderActive) return; // Stop jika dibatalkan
         pushNotif('Pesanan selesai', '🏠'); 
         showPage('page-rating-driver'); 
         
@@ -791,21 +742,17 @@ function startTrackingRealtime() {
         unreadNotifCount = 0; 
         updateNotifBadge();
     }, 21000); 
-    
-    trackingTimeouts.push(t1, t2, t3);
 }
 
-function batalPesanan() {
-    let konfirmasi = confirm("Apakah Anda yakin ingin membatalkan pesanan ini?");
-    if(konfirmasi) {
-        clearAllTrackingTimeouts();
-        if(trackingAnimationInterval) clearInterval(trackingAnimationInterval);
-        
+// REVISI: Fungsi Batalkan Pesanan
+function cancelOrder() {
+    if(confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) {
+        clearInterval(trackingAnimationInterval);
         isOrderActive = false;
+        currentCheckoutResto = null;
         document.getElementById('active-order-banner').style.display = 'none';
-        
         goToHome();
-        showToast("❌ Pesanan berhasil dibatalkan");
+        alert("Pesanan telah berhasil dibatalkan.");
     }
 }
 
@@ -830,7 +777,7 @@ function tampilkanPopupTerimaKasih() {
     popup.innerHTML = `
         <div style="font-size:45px; margin-bottom:15px;">💛</div>
         <h3 style="margin:0 0 10px 0; color:#ffeb00; font-size:20px;">Terima Kasih!</h3>
-        <p style="font-size:14px; margin:0 0 20px 0; color:#ccc; line-height:1.5;">Setiap rating dari Anda sangat berarti bagi kami.<br><br><span style="color: #ffeb00; font-weight: bold;">Selamat menikmati pesanannya!</span></p>
+        <p style="font-size:14px; margin:0 0 20px 0; color:#ccc; line-height:1.5;">Setiap rating dari Anda sangat berarti bagi kami.<br><br>Selamat menikmati pesanannya!</p>
         <button onclick="document.getElementById('thankyou-popup').remove()" style="background:#ffeb00; color:#000; border:none; padding:12px 20px; width: 100%; border-radius:10px; font-weight:bold; font-size: 15px; cursor:pointer;">Tutup</button>
     `;
     
@@ -842,28 +789,14 @@ function tampilkanPopupTerimaKasih() {
     }, 4000);
 }
 
-// REVISI: Logika Promo Terhapus saat Pesanan Selesai
 function rateResto(num) {
     const stars = document.querySelectorAll('#stars-resto span');
     stars.forEach((star, index) => star.classList.toggle('active', index < num));
     setTimeout(() => { 
         allRestaurants.forEach(r => { if (r.name === currentCheckoutResto) r.sold += 1; });
         
-        // Simpan promo yang dipakai ke array agar hilang dari list
-        if (isPromoApplied && appliedPromoCode !== "") {
-            usedPromos.push(appliedPromoCode);
-            renderPromos(); 
-        }
-
         isPromoApplied = false; 
-        appliedPromoAmount = 0;
-        appliedPromoCode = "";
-        
-        document.getElementById('btn-pilih-promo').innerText = `Pilih Kode Promo Disini`;
-        document.getElementById('btn-pilih-promo').style.color = '#ffeb00';
-        document.getElementById('btn-pilih-promo').style.borderColor = '#444';
-        document.getElementById('promo-success-msg').style.display = 'none';
-
+        promoDiscountAmount = 0;
         isOrderActive = false; 
         
         notifData = []; 
