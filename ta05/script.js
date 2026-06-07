@@ -1,5 +1,4 @@
 const allRestaurants = [
-    // REVISI: Seluruh imgResto dan imgFood diberikan awalan "../" agar membaca file di luar folder ta05
     { id: 1, name: "Warung Koh Ray", distance: 0.8, rating: 2.0, sold: 26, menuSold: 25, food: "Mie Ayam Spesial", price: 18000, imgResto: "../kohray.png", imgFood: "../mieayam.png" },
     { id: 2, name: "Warung Bu Tini", distance: 12.0, rating: 3.0, sold: 78, menuSold: 12, food: "Ayam Geprek", price: 28000, imgResto: "../butini.png", imgFood: "../ayamgeprek.png" },
     { id: 3, name: "Ristorante Italiano", distance: 2.5, rating: 5.0, sold: 210, menuSold: 85, food: "Margherita Pizza", price: 118000, imgResto: "../Ristorante Italiano.png", imgFood: "../margheritta pizza.png" },
