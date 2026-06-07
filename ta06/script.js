@@ -11,10 +11,20 @@ const allRestaurants = [
     { id: 10, name: "Warkop Tjap Cobra", distance: 0.5, rating: 3.5, sold: 86, menuSold: 36, food: "Kopi Hitam", price: 8000, imgResto: "../Warkop Tjap Cobra.png", imgFood: "../Kopi hitam.png" }
 ];
 
+// REVISI: Data Promo Dinamis + 1 Promo Expired
+const allPromos = [
+    { id: 'MAXIM20', title: '🏷️ DISKON 20%', desc: 'Potongan maksimal Rp. 12.000', discount: 12000, status: 'available' },
+    { id: 'MAXIM30', title: '🏷️ POTONGAN FLAT', desc: 'Potongan langsung Rp. 30.000', discount: 30000, status: 'available' },
+    { id: 'MAXIM10', title: '🏷️ POTONGAN FLAT', desc: 'Potongan langsung Rp. 10.000', discount: 10000, status: 'available' },
+    { id: 'MAXIM50', title: '🏷️ PROMO SPESIAL', desc: 'Potongan Rp. 50.000 (Kadaluarsa)', discount: 50000, status: 'expired' }
+];
+
+let usedPromos = []; // Menyimpan promo yang sudah dipakai pesanan selesai
 let cart = {}; 
 let isPromoApplied = false;
-let appliedPromoAmount = 0; // Tambahan untuk besaran diskon promo (Heuristik 6)
-let isAddressSelected = false; // Tambahan untuk validasi lokasi (Heuristik 5)
+let appliedPromoAmount = 0; 
+let appliedPromoCode = ""; 
+let isAddressSelected = false; // Validasi lokasi wajib
 let selectedPayment = 'tunai';
 let currentDetailId = null; 
 let activeFilters = { terdekat: false, rating: null, harga: null };
@@ -28,7 +38,7 @@ let userLng = 106.7810;
 let trackingMap;
 let trackingDriverMarker;
 let trackingAnimationInterval;
-let trackingTimeouts = []; // Menyimpan semua Timeout tracking untuk dibatalkan
+let trackingTimeouts = []; 
 let userName = '';
 let userPhone = '';
 let correctOTP = '';
@@ -37,7 +47,6 @@ let typeInterval;
 let typeTimeout;
 let resendInterval;
 let timeLeft = 10; 
-
 let isOrderActive = false;
 
 window.onload = () => {
@@ -52,9 +61,10 @@ window.onload = () => {
         showPage('page-login');
     }
     renderHomeList(allRestaurants);
+    renderPromos(); // Render awal promo
 };
 
-// REVISI: Fungsi Toast Notifikasi Visual Keranjang (Heuristik 1)
+// REVISI: Fungsi Toast Notifikasi Visual Keranjang
 function showToast(message) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -79,7 +89,7 @@ function goBackToActivity() {
 }
 
 function logoutApp() {
-    if(confirm("Apakah Anda yakin ingin logout? (Ini akan mengeluarkan akun dari sistem)")) {
+    if(confirm("Apakah Anda yakin ingin logout?")) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userName');
         localStorage.removeItem('userPhone');
@@ -92,7 +102,6 @@ function goBackToActivityFromHome() {
     startTypewriter(); 
 }
 
-// SIMULASI LOGIN & OTP TETAP SAMA...
 function requestOTP() {
     userName = document.getElementById('login-name').value.trim();
     userPhone = document.getElementById('login-phone').value.trim();
@@ -225,7 +234,7 @@ function goToCart() { showPage('cart-page'); renderCartPage(); }
 function goToCheckout(restoName) { 
     if(restoName) currentCheckoutResto = restoName;
     
-    // Validasi Address & Tombol Proses (Heuristik 5)
+    // Validasi Button (Heuristik 5)
     let btnProses = document.getElementById('btn-proses-pesanan');
     if (isAddressSelected) {
         btnProses.disabled = false;
@@ -244,12 +253,66 @@ function goToCheckout(restoName) {
 function goToLokasi() { showPage('page-lokasi'); }
 
 function goToPromo() { 
-    lastPageSebelumNotif = 'checkout-page'; // Supaya panah back promo balik ke checkout
+    lastPageSebelumNotif = 'checkout-page'; 
     showPage('page-promo'); 
 }
 
-function goBackFromPromo() {
+function goBackFromPromo() { showPage('checkout-page'); }
+
+// REVISI: Render Promo + Hapus Promo Dipakai + Label Tersedia
+function renderPromos() {
+    const container = document.getElementById('promo-list-container');
+    container.innerHTML = '';
+    
+    let visibleCount = 0;
+
+    allPromos.forEach(p => {
+        // Hilangkan dari tampilan jika sudah digunakan
+        if (usedPromos.includes(p.id)) return;
+        
+        visibleCount++;
+        let isExpired = p.status === 'expired';
+        
+        let statusHTML = isExpired 
+            ? `<div style="background:#f2f2f2; color:#888; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; border:1px solid #aaa;">TIDAK TERSEDIA</div>`
+            : `<div style="background:#eafaf1; color:#2ecc71; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; border:1px solid #2ecc71;">TERSEDIA</div>`;
+        
+        let onClickHTML = isExpired ? `` : `onclick="applyPromoSelection('${p.id}', ${p.discount})"`;
+        let cursorStyle = isExpired ? `cursor: default; opacity: 0.6; filter: grayscale(100%);` : `cursor: pointer;`;
+
+        container.innerHTML += `
+        <div class="promo-card-item" style="${cursorStyle} margin-bottom:15px;" ${onClickHTML}>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span class="promo-label" style="color:${isExpired ? '#888' : '#ffeb00'}">${p.title}</span>
+                    <div class="promo-code-box" style="padding: 10px; font-size: 20px; color:${isExpired ? '#888' : '#fff'};">${p.id}</div>
+                    <p style="color: #aaa; font-size: 12px; margin: 0;">${p.desc}</p>
+                </div>
+                ${statusHTML}
+            </div>
+        </div>`;
+    });
+
+    if(visibleCount === 0) {
+        container.innerHTML = `<p style="text-align:center; color:#888; margin-top:30px;">Tidak ada promo yang tersedia.</p>`;
+    }
+}
+
+// REVISI: Logika "Pilih" bukan "Ketik"
+function applyPromoSelection(code, discountValue) {
+    isPromoApplied = true;
+    appliedPromoAmount = discountValue;
+    appliedPromoCode = code; 
+
+    document.getElementById('btn-pilih-promo').innerText = `✅ Promo Terpakai: ${code}`;
+    document.getElementById('btn-pilih-promo').style.color = '#34c759';
+    document.getElementById('btn-pilih-promo').style.borderColor = '#34c759';
+    
+    document.getElementById('promo-success-msg').style.display = 'flex'; 
+    document.getElementById('promo-success-msg').innerText = `✔️ Promo berhasil! Hemat Rp.${discountValue.toLocaleString('id-ID')}`;
+    
     showPage('checkout-page');
+    renderCheckoutPage(); 
 }
 
 function goToNotifikasi() {
@@ -297,7 +360,7 @@ function pilihLokasi(alamatText, lat = null, lng = null) {
     document.getElementById('input-cari-lokasi').value = ''; 
     document.getElementById('lokasi-suggestions').style.display = 'none'; 
     
-    // REVISI: Aktifkan Tombol Proses Pesanan jika lokasi dipilih (Heuristik 5)
+    // REVISI: Aktifkan Tombol
     isAddressSelected = true;
     let btnProses = document.getElementById('btn-proses-pesanan');
     btnProses.disabled = false;
@@ -307,15 +370,12 @@ function pilihLokasi(alamatText, lat = null, lng = null) {
     showPage('checkout-page');
 }
 
-// REVISI: Fitur Lokasi Favorit (Heuristik 7)
 function toggleFav(element, event) {
-    event.stopPropagation(); // Mencegah ter-trigger klik lokasi
+    event.stopPropagation(); 
     if(element.innerText === '☆') {
-        element.innerText = '★';
-        element.style.color = '#ffeb00';
+        element.innerText = '★'; element.style.color = '#ffeb00';
     } else {
-        element.innerText = '☆';
-        element.style.color = '#ccc';
+        element.innerText = '☆'; element.style.color = '#ccc';
     }
 }
 
@@ -393,7 +453,6 @@ function renderSearchList(data) {
             </div>`;
     });
     
-    // REVISI: Tampilkan pesan custom jika kosong (Heuristik 9)
     let noResultEl = document.getElementById('no-result');
     if(noResultEl) noResultEl.style.display = ada ? "none" : "block";
 }
@@ -431,7 +490,6 @@ function changeQty(amount) {
     if (currentQty <= 0) delete cart[currentDetailId]; 
     else {
         cart[currentDetailId] = currentQty;
-        // REVISI: Munculkan Toast Feedback saat item ditambah (Heuristik 1)
         if(amount > 0) {
             const resto = allRestaurants.find(r => r.id === currentDetailId);
             showToast(`✔️ ${resto.food} ditambahkan`);
@@ -557,7 +615,7 @@ function renderCheckoutPage() {
     const ongkir = 8000; 
     const diskon = isPromoApplied ? appliedPromoAmount : 0; 
     let totalBayar = subtotal + ongkir - diskon;
-    if (totalBayar < 0) totalBayar = 0; // Guard agar tidak minus
+    if (totalBayar < 0) totalBayar = 0; 
     
     document.getElementById('co-qty-text').innerText = `Subtotal(${totalItems} item)`; 
     document.getElementById('co-subtotal').innerText = `Rp. ${subtotal.toLocaleString('id-ID')}`;
@@ -574,22 +632,6 @@ function renderCheckoutPage() {
 
 function selectPayment(method) {
     selectedPayment = method; document.getElementById('radio-kaspro').classList.remove('selected'); document.getElementById('radio-tunai').classList.remove('selected'); document.getElementById(`radio-${method}`).classList.add('selected');
-}
-
-// REVISI: Pilih Promo bukan Ketik (Heuristik 6)
-function applyPromoSelection(code, discountValue) {
-    isPromoApplied = true; 
-    appliedPromoAmount = discountValue;
-    
-    document.getElementById('btn-pilih-promo').innerText = `✅ Promo Terpakai: ${code}`;
-    document.getElementById('btn-pilih-promo').style.color = '#34c759';
-    document.getElementById('btn-pilih-promo').style.borderColor = '#34c759';
-    
-    document.getElementById('promo-success-msg').style.display = 'flex'; 
-    document.getElementById('promo-success-msg').innerText = `✔️ Promo berhasil! Hemat Rp.${discountValue.toLocaleString('id-ID')}`;
-    
-    showPage('checkout-page');
-    renderCheckoutPage(); 
 }
 
 function clearAllTrackingTimeouts() {
@@ -705,7 +747,7 @@ function goToTracking() {
 }
 
 function startTrackingRealtime() {
-    clearAllTrackingTimeouts(); // Bersihkan timeout lama
+    clearAllTrackingTimeouts(); 
     
     document.getElementById('tracking-title-text').innerText = "Estimasi";
     document.getElementById('tracking-state-1').style.display = 'block'; 
@@ -714,7 +756,6 @@ function startTrackingRealtime() {
     document.getElementById('prog-line-2').classList.remove('active'); document.getElementById('prog-line-3').classList.remove('active');
     document.getElementById('tracking-status-text').innerText = "Mencari driver..."; document.getElementById('driver-card').style.display = 'none'; 
     
-    // REVISI: Tombol Batalkan Pesanan aktif di tahap awal (Heuristik 3)
     document.getElementById('btn-batal-pesanan').style.display = 'block';
     
     pushNotif('Mencari driver', 'Ⓜ️');
@@ -723,7 +764,6 @@ function startTrackingRealtime() {
         document.getElementById('prog-step-2').classList.add('active'); document.getElementById('prog-line-2').classList.add('active'); 
         document.getElementById('tracking-status-text').innerText = "Menunggu makananmu"; document.getElementById('driver-card').style.display = 'flex'; 
         
-        // REVISI: Hilangkan tombol Batalkan Pesanan saat driver sudah dapat
         document.getElementById('btn-batal-pesanan').style.display = 'none';
         
         pushNotif('Mendapatkan driver', '👤');
@@ -755,7 +795,6 @@ function startTrackingRealtime() {
     trackingTimeouts.push(t1, t2, t3);
 }
 
-// REVISI: Logika Batal Pesanan (Heuristik 3)
 function batalPesanan() {
     let konfirmasi = confirm("Apakah Anda yakin ingin membatalkan pesanan ini?");
     if(konfirmasi) {
@@ -791,7 +830,7 @@ function tampilkanPopupTerimaKasih() {
     popup.innerHTML = `
         <div style="font-size:45px; margin-bottom:15px;">💛</div>
         <h3 style="margin:0 0 10px 0; color:#ffeb00; font-size:20px;">Terima Kasih!</h3>
-        <p style="font-size:14px; margin:0 0 20px 0; color:#ccc; line-height:1.5;">Setiap rating dari Anda sangat berarti bagi kami.<br><br>Selamat menikmati pesanannya!</p>
+        <p style="font-size:14px; margin:0 0 20px 0; color:#ccc; line-height:1.5;">Setiap rating dari Anda sangat berarti bagi kami.<br><br><span style="color: #ffeb00; font-weight: bold;">Selamat menikmati pesanannya!</span></p>
         <button onclick="document.getElementById('thankyou-popup').remove()" style="background:#ffeb00; color:#000; border:none; padding:12px 20px; width: 100%; border-radius:10px; font-weight:bold; font-size: 15px; cursor:pointer;">Tutup</button>
     `;
     
@@ -803,16 +842,23 @@ function tampilkanPopupTerimaKasih() {
     }, 4000);
 }
 
+// REVISI: Logika Promo Terhapus saat Pesanan Selesai
 function rateResto(num) {
     const stars = document.querySelectorAll('#stars-resto span');
     stars.forEach((star, index) => star.classList.toggle('active', index < num));
     setTimeout(() => { 
         allRestaurants.forEach(r => { if (r.name === currentCheckoutResto) r.sold += 1; });
         
+        // Simpan promo yang dipakai ke array agar hilang dari list
+        if (isPromoApplied && appliedPromoCode !== "") {
+            usedPromos.push(appliedPromoCode);
+            renderPromos(); 
+        }
+
         isPromoApplied = false; 
         appliedPromoAmount = 0;
+        appliedPromoCode = "";
         
-        // Reset state promo UI
         document.getElementById('btn-pilih-promo').innerText = `Pilih Kode Promo Disini`;
         document.getElementById('btn-pilih-promo').style.color = '#ffeb00';
         document.getElementById('btn-pilih-promo').style.borderColor = '#444';

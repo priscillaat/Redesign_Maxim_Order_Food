@@ -233,13 +233,12 @@ body { background-color: #1c212a; display: flex; justify-content: center; margin
 .product-card { background: #222; padding: 10px; border-radius: 15px; width: 160px; }
 .product-card img { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; }
 
-.promo-card-item { background: #111; border: 1px solid #333; padding: 20px; border-radius: 20px; margin-bottom: 20px; }
+/* REVISI CSS PROMO */
+.promo-card-item { background: #111; border: 1px solid #333; padding: 20px; border-radius: 20px; transition: 0.2s; }
+.promo-card-item:hover { border-color: #ffeb00; }
 .promo-label { color: #ffeb00; font-size: 12px; font-weight: bold; margin-bottom: 10px; display: block; }
 .promo-code-box { background: #222; padding: 15px; border-radius: 12px; font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #fff; }
 .status { font-size: 14px; font-weight: bold; text-align: right; }
-.status.berlaku { color: #00ff00; }
-.status.digunakan { color: #fff; }
-.status.kadaluarsa { color: #ff4444; }
 
 .search-lokasi-box { background: #222; border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; border: 1px solid #555;}
 .yellow-dot { width: 12px; height: 12px; background: #FFFF00; border-radius: 50%; box-shadow: 0 0 5px #FFFF00;}
@@ -473,7 +472,6 @@ body { background-color: #1c212a; display: flex; justify-content: center; margin
     font-weight: bold;
 }
 
-/* TAMBAHAN UNTUK REVISI (TOAST NOTIFICATION & LOKASI FAVORIT) */
 .toast-container {
     position: fixed;
     top: 20px;

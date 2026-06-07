@@ -167,7 +167,7 @@
             </div>
             <div class="profil-item" onclick="showPage('page-bantuan')">
                 <span class="profil-icon">❓</span>
-                <div class="profil-info"><p class="profil-label">Bantuan & FAQ</p><p class="profil-value" style="color: #ccc;">Pusat Dukungan</p></div><span class="profil-arrow">›</span>
+                <div class="profil-info"><p class="profil-label">Bantuan & Laporan</p><p class="profil-value" style="color: #ccc;">Pusat FAQ</p></div><span class="profil-arrow">›</span>
             </div>
             <div class="profil-item">
                 <span class="profil-icon">🚨</span>
@@ -185,9 +185,9 @@
         </div>
         <div style="padding: 20px; color: #ccc; line-height: 1.6;">
             <h3 style="color: #fff; margin-bottom: 10px;">FAQ</h3>
-            <p><b>Q: Bagaimana cara membatalkan pesanan?</b><br>A: Anda dapat membatalkan pesanan saat sistem sedang mencarikan driver melalui tombol merah di tracking pesanan.</p><br>
-            <p><b>Q: Kenapa tidak bisa Checkout?</b><br>A: Pastikan Anda telah mengisi Alamat Pengiriman terlebih dahulu.</p><br>
-            <p><b>Q: Bagaimana cara menggunakan promo?</b><br>A: Masuk ke halaman Checkout, lalu klik tombol "Pilih Kode Promo" dan tekan "Gunakan" pada promo yang tersedia.</p>
+            <p><b>Q: Bagaimana cara membatalkan pesanan?</b><br>A: Anda dapat membatalkan pesanan saat sistem sedang mencarikan driver melalui tombol di menu tracking.</p><br>
+            <p><b>Q: Kenapa tidak bisa Proses Pesanan?</b><br>A: Pastikan Anda telah mengisi Alamat Pengiriman terlebih dahulu di halaman Checkout.</p><br>
+            <p><b>Q: Bagaimana cara menggunakan promo?</b><br>A: Masuk ke Checkout, klik "Pilih Kode Promo Disini", lalu tap pada kartu promo yang Tersedia.</p>
         </div>
     </div>
 
@@ -271,38 +271,9 @@
                 </div>
             </div>
             
-            <div class="promo-card-item">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span class="promo-label">🏷️ DISKON 20%</span>
-                        <div class="promo-code-box" style="padding: 10px; font-size: 20px;">MAXIM20</div>
-                        <p style="color: #aaa; font-size: 12px; margin: 0;">Potongan maksimal Rp. 12.000</p>
-                    </div>
-                    <button onclick="applyPromoSelection('MAXIM20', 12000)" style="background: #ffeb00; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">Gunakan</button>
-                </div>
-            </div>
-
-            <div class="promo-card-item">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span class="promo-label">🏷️ POTONGAN FLAT</span>
-                        <div class="promo-code-box" style="padding: 10px; font-size: 20px;">MAXIM30</div>
-                        <p style="color: #aaa; font-size: 12px; margin: 0;">Potongan langsung Rp. 30.000</p>
-                    </div>
-                    <button onclick="applyPromoSelection('MAXIM30', 30000)" style="background: #ffeb00; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">Gunakan</button>
-                </div>
-            </div>
-
-            <div class="promo-card-item">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span class="promo-label">🏷️ POTONGAN FLAT</span>
-                        <div class="promo-code-box" style="padding: 10px; font-size: 20px;">MAXIM10</div>
-                        <p style="color: #aaa; font-size: 12px; margin: 0;">Potongan langsung Rp. 10.000</p>
-                    </div>
-                    <button onclick="applyPromoSelection('MAXIM10', 10000)" style="background: #ffeb00; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">Gunakan</button>
-                </div>
-            </div>
+            <p style="color: #aaa; font-size: 12px; margin-bottom: 15px;">Klik pada kartu promo yang Tersedia untuk menerapkannya ke pesanan Anda.</p>
+            <div id="promo-list-container"></div>
+            
         </div>
     </div>
 
@@ -496,7 +467,6 @@
                     <div class="prog-line" id="prog-line-3"></div>
                     <div class="prog-step" id="prog-step-4">🏠</div>
                 </div>
-                
                 <button id="btn-batal-pesanan" onclick="batalPesanan()" style="width: 100%; background-color: #ff4444; color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; margin-bottom: 15px; display: block;">Batalkan Pesanan</button>
             </div>
 
