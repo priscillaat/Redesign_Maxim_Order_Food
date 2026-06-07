@@ -1,4 +1,5 @@
 const allRestaurants = [
+    // REVISI: Seluruh imgResto dan imgFood diberikan awalan "../" agar membaca file di luar folder ta05
     { id: 1, name: "Warung Koh Ray", distance: 0.8, rating: 2.0, sold: 26, menuSold: 25, food: "Mie Ayam Spesial", price: 18000, imgResto: "../kohray.png", imgFood: "../mieayam.png" },
     { id: 2, name: "Warung Bu Tini", distance: 12.0, rating: 3.0, sold: 78, menuSold: 12, food: "Ayam Geprek", price: 28000, imgResto: "../butini.png", imgFood: "../ayamgeprek.png" },
     { id: 3, name: "Ristorante Italiano", distance: 2.5, rating: 5.0, sold: 210, menuSold: 85, food: "Margherita Pizza", price: 118000, imgResto: "../Ristorante Italiano.png", imgFood: "../margheritta pizza.png" },
@@ -523,6 +524,163 @@ function renderCheckoutPage() {
     document.getElementById('co-qty-text').innerText = `Subtotal(${totalItems} item)`; document.getElementById('co-subtotal').innerText = `Rp. ${subtotal.toLocaleString('id-ID')}`;
     document.getElementById('summary-discount').style.display = isPromoApplied ? 'flex' : 'none';
     document.getElementById('co-total-bayar').innerText = `Rp. ${totalBayar.toLocaleString('id-ID')}`;
+}
+
+function selectPayment(method) {
+    selectedPayment = method; document.getElementById('radio-kaspro').classList.remove('selected'); document.getElementById('radio-tunai').classList.remove('selected'); document.getElementById(`radio-${method}`).classList.add('selected');
+}
+
+function applyPromo() {
+    const input = document.getElementById('promo-code-input').value.toUpperCase();
+    if (input === 'MAXIM20') { isPromoApplied = true; document.getElementById('promo-success-msg').style.display = 'flex'; renderCheckoutPage(); } else { alert("Kode promo tidak valid"); }
+}
+
+function initAnimatedTrackingMap() {
+    if (trackingMap) trackingMap.remove();
+    
+    trackingMap = L.map('tracking-map').setView([userLat, userLng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(trackingMap);
+
+    const homeIcon = L.divIcon({ className: 'custom-map-icon', html: '🏠', iconSize: [30, 30] });
+    const driverIcon = L.divIcon({ className: 'custom-map-icon', html: '🛵', iconSize: [30, 30] });
+    const restoIcon = L.divIcon({ className: 'custom-map-icon', html: '🏪', iconSize: [30, 30] });
+
+    L.marker([userLat, userLng], {icon: homeIcon}).addTo(trackingMap).bindPopup("Lokasi Kamu").openPopup();
+
+    let restoLat = userLat + 0.012;
+    let restoLng = userLng + 0.015;
+
+    let waypoints = [
+        [restoLat, restoLng],                           
+        [restoLat - 0.004, restoLng],                   
+        [restoLat - 0.004, restoLng - 0.008],           
+        [userLat + 0.003, restoLng - 0.008],            
+        [userLat + 0.003, userLng],                     
+        [userLat, userLng]                              
+    ];
+
+    L.marker([restoLat, restoLng], {icon: restoIcon}).addTo(trackingMap).bindPopup("Restoran");
+
+    let routeLine = L.polyline(waypoints, { color: '#ff1e00', weight: 4, opacity: 0.8 }).addTo(trackingMap);
+
+    trackingDriverMarker = L.marker([restoLat, restoLng], {icon: driverIcon}).addTo(trackingMap).bindPopup("Driver Anda");
+
+    setTimeout(() => {
+        trackingMap.invalidateSize();
+        let bounds = L.latLngBounds(waypoints);
+        trackingMap.fitBounds(bounds, { padding: [20, 20] });
+    }, 400);
+
+    if(trackingAnimationInterval) clearInterval(trackingAnimationInterval);
+
+    let currentSegment = 0;
+    let framesPerSegment = 50; 
+    let currentFrame = 0;
+    let intervalTime = 7000 / (framesPerSegment * (waypoints.length - 1));
+
+    trackingAnimationInterval = setInterval(() => {
+        if (currentSegment >= waypoints.length - 1) {
+            clearInterval(trackingAnimationInterval);
+            return;
+        }
+
+        let startPt = waypoints[currentSegment];
+        let endPt = waypoints[currentSegment + 1];
+
+        let latStep = (endPt[0] - startPt[0]) / framesPerSegment;
+        let lngStep = (endPt[1] - startPt[1]) / framesPerSegment;
+
+        currentFrame++;
+        let newLat = startPt[0] + (latStep * currentFrame);
+        let newLng = startPt[1] + (lngStep * currentFrame);
+        
+        let currentPos = [newLat, newLng];
+        trackingDriverMarker.setLatLng(currentPos);
+
+        let remainingWaypoints = [currentPos].concat(waypoints.slice(currentSegment + 1));
+        routeLine.setLatLngs(remainingWaypoints);
+
+        if (currentFrame >= framesPerSegment) {
+            currentSegment++;
+            currentFrame = 0;
+        }
+    }, intervalTime);
+}
+
+function goToTracking() {
+    isOrderActive = true; 
+    showPage('tracking-page'); notifData = []; updateNotifBadge();
+    const firstCartId = Object.keys(cart).find(id => allRestaurants.find(r => r.id == id).name === currentCheckoutResto);
+    const resto = allRestaurants.find(r => r.id == firstCartId);
+    const qty = cart[firstCartId] || 1;
+    
+    document.getElementById('tracking-food-item').innerHTML = `
+        <div style="display: flex; gap: 15px; align-items: center; width: 100%;">
+            <img src="${resto.imgFood}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover;">
+            <div style="flex: 1;">
+                <h4 style="font-size: 14px; font-weight: bold; margin: 0 0 3px 0; color: #000;">${resto.food}</h4>
+                <p style="font-size: 11px; color: #666; margin: 0 0 5px 0;">${resto.name}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: bold; font-size: 14px; color: #000;">Rp ${resto.price.toLocaleString('id-ID')}</div>
+                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: bold; font-size: 14px; color: #000; margin: 0 5px;">Jumlah: ${qty}</span></div>
+                </div>
+            </div>
+        </div>`;
+    document.getElementById('rating-resto-card').innerHTML = `<div class="card-resto"><img src="${resto.imgResto}" alt="${resto.name}" class="img-resto-sm"><div class="resto-info" style="text-align: left;"><h4>${resto.name}</h4><p>${resto.distance} km</p><div class="stars" style="color:#FFFF00;">★★★★★</div></div></div>`;
+    
+    Object.keys(cart).forEach(id => {
+        const itemQty = cart[id];
+        const r = allRestaurants.find(rest => rest.id == parseInt(id));
+        if (r && r.name === currentCheckoutResto) {
+            r.menuSold = (r.menuSold || 0) + itemQty;
+            delete cart[id];
+        }
+    });
+    updateCartBadge();  
+    
+    startTrackingRealtime();
+}
+
+function startTrackingRealtime() {
+    document.getElementById('tracking-title-text').innerText = "Estimasi";
+    document.getElementById('tracking-state-1').style.display = 'block'; 
+    document.getElementById('tracking-state-2').style.display = 'none';  
+    document.getElementById('prog-step-2').classList.remove('active'); document.getElementById('prog-step-3').classList.remove('active'); document.getElementById('prog-step-4').classList.remove('active');
+    document.getElementById('prog-line-2').classList.remove('active'); document.getElementById('prog-line-3').classList.remove('active');
+    document.getElementById('tracking-status-text').innerText = "Mencari driver..."; document.getElementById('driver-card').style.display = 'none'; 
+    pushNotif('Mencari driver', 'Ⓜ️');
+
+    setTimeout(() => {
+        document.getElementById('prog-step-2').classList.add('active'); document.getElementById('prog-line-2').classList.add('active'); 
+        document.getElementById('tracking-status-text').innerText = "Menunggu makananmu"; document.getElementById('driver-card').style.display = 'flex'; 
+        pushNotif('Mendapatkan driver', '👤');
+        setTimeout(() => pushNotif('Driver sampai di resto', '🍴'), 1000);
+        setTimeout(() => pushNotif('Menunggu makananmu', '🍳'), 2000);
+    }, 7000); 
+
+    setTimeout(() => {
+        document.getElementById('tracking-title-text').innerText = "Tepat waktu";
+        document.getElementById('tracking-state-1').style.display = 'none'; 
+        document.getElementById('tracking-state-2').style.display = 'block'; 
+        document.getElementById('tracking-status-text').innerText = "Driver menuju lokasi mu";
+        pushNotif('Makananmu sudah selesai', '🛎️'); setTimeout(() => pushNotif('Driver menuju lokasimu', '🛵'), 1000);
+        initAnimatedTrackingMap();
+    }, 14000); 
+
+    setTimeout(() => { 
+        pushNotif('Pesanan selesai', '🏠'); 
+        showPage('page-rating-driver'); 
+        
+        notifData = []; 
+        unreadNotifCount = 0; 
+        updateNotifBadge();
+    }, 21000); 
+}
+
+function rateDriver(num) {
+    const stars = document.querySelectorAll('#stars-driver span');
+    stars.forEach((star, index) => star.classList.toggle('active', index < num));
+    setTimeout(() => { showPage('page-tip-driver'); }, 500);
 }
 
 function selectPayment(method) {
