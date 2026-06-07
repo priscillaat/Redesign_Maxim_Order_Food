@@ -209,14 +209,6 @@ body { background-color: #1c212a; display: flex; justify-content: center; margin
 
 .cart-badge, .notif-badge { position: absolute; top: -1px; right: -1px; background: red; color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; display: none; }
 
-/* REVISI: Class Animasi Pop untuk Badge Cart */
-.pop-anim { animation: popBadge 0.3s ease-in-out; }
-@keyframes popBadge {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); }
-    100% { transform: scale(1); }
-}
-
 .notif-container { display: flex; flex-direction: column; gap: 15px; }
 .notif-card { background: #000; border-radius: 15px; padding: 15px 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #333; color: white;}
 .notif-icon { font-size: 22px; color: #FFFF00; width: 35px; text-align: center; }
@@ -241,13 +233,12 @@ body { background-color: #1c212a; display: flex; justify-content: center; margin
 .product-card { background: #222; padding: 10px; border-radius: 15px; width: 160px; }
 .product-card img { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; }
 
-.promo-card-item { background: #111; border: 1px solid #333; padding: 20px; border-radius: 20px; margin-bottom: 20px; }
+/* REVISI CSS PROMO */
+.promo-card-item { background: #111; border: 1px solid #333; padding: 20px; border-radius: 20px; transition: 0.2s; }
+.promo-card-item:hover { border-color: #ffeb00; }
 .promo-label { color: #ffeb00; font-size: 12px; font-weight: bold; margin-bottom: 10px; display: block; }
 .promo-code-box { background: #222; padding: 15px; border-radius: 12px; font-size: 24px; font-weight: bold; margin-bottom: 10px; color: #fff; }
 .status { font-size: 14px; font-weight: bold; text-align: right; }
-.status.berlaku { color: #00ff00; }
-.status.digunakan { color: #fff; }
-.status.kadaluarsa { color: #ff4444; }
 
 .search-lokasi-box { background: #222; border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; border: 1px solid #555;}
 .yellow-dot { width: 12px; height: 12px; background: #FFFF00; border-radius: 50%; box-shadow: 0 0 5px #FFFF00;}
@@ -265,7 +256,6 @@ body { background-color: #1c212a; display: flex; justify-content: center; margin
 .lokasi-item { display: flex; align-items: center; gap: 15px; padding: 20px; border-bottom: 1px solid #222; cursor: pointer; color: white; transition: 0.2s;}
 .lokasi-item:hover { background: #111;}
 .lokasi-icon { width: 30px; height: 30px; background: white; color: black; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold;}
-.lokasi-icon.fav { background: #ffeb00; color: #000; } /* REVISI: Styling Ikon Favorit */
 .lokasi-text h4 { font-size: 14px; margin: 0 0 5px 0; font-weight: bold; color: #fff;}
 .lokasi-text p { font-size: 12px; margin: 0; color: #aaa; }
 
@@ -326,17 +316,14 @@ body { background-color: #1c212a; display: flex; justify-content: center; margin
 .radio-circle.selected { background: #00ff00; border: 2px solid #00ff00; }
 .promo-header { color: #FFFF00; font-size: 12px; font-weight: bold; margin-bottom: 10px;}
 .promo-input-row { display: flex; gap: 10px; }
-
-/* REVISI: Select Dropdown Styling */
-.promo-input { flex: 1; background: #666; border: none; border-radius: 10px; padding: 12px; color: white; font-size: 14px; font-weight: bold; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer;}
-
+.promo-input { flex: 1; background: #666; border: none; border-radius: 10px; padding: 12px; color: white; font-size: 16px; font-weight: bold; outline: none;}
 .promo-btn-checkout { background: #FFFF00; color: #000; border: none; border-radius: 10px; padding: 0 15px; font-weight: bold; font-size: 12px; cursor: pointer;}
 .promo-success { background: #5a9c5a; color: #111; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: bold; margin-top: 10px; display: none; align-items: center; gap: 8px;}
 .summary-title { color: #FFFF00; font-size: 12px; font-weight: bold; margin-bottom: 10px;}
 .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #ccc;}
 .summary-row.discount { display: none; }
 .total-row { border-top: 1px dotted #333; margin-top: 15px; padding-top: 15px; display: flex; justify-content: space-between; color: #FFFF00; font-weight: bold; font-size: 14px;}
-.btn-lanjut-bayar { background: #FFFF00; color: #000; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 15px; cursor: pointer;}
+.btn-lanjut-bayar { background: #FFFF00; color: #000; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 15px; cursor: pointer; transition: 0.2s;}
 
 .tracking-header { color: white; padding: 20px; font-size: 22px; font-weight: bold; display: flex; align-items: center; gap: 15px; padding-bottom: 25px;}
 .tracking-content { background: #fff; padding: 20px; min-height: 85vh; border-top-left-radius: 20px; border-top-right-radius: 20px;}
@@ -483,4 +470,40 @@ body { background-color: #1c212a; display: flex; justify-content: center; margin
     font-size: 20px;
     color: #555;
     font-weight: bold;
+}
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+}
+.toast-msg {
+    background-color: #2b303b;
+    border-left: 4px solid #ffeb00;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    animation: slideDownFade 3s forwards;
+}
+
+@keyframes slideDownFade {
+    0% { transform: translateY(-20px); opacity: 0; }
+    15% { transform: translateY(0); opacity: 1; }
+    85% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-20px); opacity: 0; }
+}
+
+.fav-icon:hover {
+    transform: scale(1.2);
+    transition: 0.2s;
 }
