@@ -11,7 +11,6 @@ const allRestaurants = [
     { id: 10, name: "Warkop Tjap Cobra", distance: 0.5, rating: 3.5, sold: 86, menuSold: 36, food: "Kopi Hitam", price: 8000, imgResto: "../Warkop Tjap Cobra.png", imgFood: "../Kopi hitam.png" }
 ];
 
-// REVISI: Data Promo Dinamis + 1 Promo Expired
 const allPromos = [
     { id: 'MAXIM20', title: '🏷️ DISKON 20%', desc: 'Potongan maksimal Rp. 12.000', discount: 12000, status: 'available' },
     { id: 'MAXIM30', title: '🏷️ POTONGAN FLAT', desc: 'Potongan langsung Rp. 30.000', discount: 30000, status: 'available' },
@@ -19,12 +18,12 @@ const allPromos = [
     { id: 'MAXIM50', title: '🏷️ PROMO SPESIAL', desc: 'Potongan Rp. 50.000 (Kadaluarsa)', discount: 50000, status: 'expired' }
 ];
 
-let usedPromos = []; // Menyimpan promo yang sudah dipakai pesanan selesai
+let usedPromos = []; 
 let cart = {}; 
 let isPromoApplied = false;
 let appliedPromoAmount = 0; 
 let appliedPromoCode = ""; 
-let isAddressSelected = false; // Validasi lokasi wajib
+let isAddressSelected = false; 
 let selectedPayment = 'tunai';
 let currentDetailId = null; 
 let activeFilters = { terdekat: false, rating: null, harga: null };
@@ -61,10 +60,9 @@ window.onload = () => {
         showPage('page-login');
     }
     renderHomeList(allRestaurants);
-    renderPromos(); // Render awal promo
+    renderPromos(); 
 };
 
-// REVISI: Fungsi Toast Notifikasi Visual Keranjang
 function showToast(message) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -234,7 +232,6 @@ function goToCart() { showPage('cart-page'); renderCartPage(); }
 function goToCheckout(restoName) { 
     if(restoName) currentCheckoutResto = restoName;
     
-    // Validasi Button (Heuristik 5)
     let btnProses = document.getElementById('btn-proses-pesanan');
     if (isAddressSelected) {
         btnProses.disabled = false;
@@ -257,9 +254,12 @@ function goToPromo() {
     showPage('page-promo'); 
 }
 
-function goBackFromPromo() { showPage('checkout-page'); }
+// REVISI: Mengembalikan pengguna secara langsung ke halaman utama pesan makanan
+function goBackFromPromo() { 
+    goToHome(); 
+}
 
-// REVISI: Render Promo + Hapus Promo Dipakai + Label Tersedia
+// REVISI: Hanya menampilkan promo yang tersedia dan belum digunakan
 function renderPromos() {
     const container = document.getElementById('promo-list-container');
     container.innerHTML = '';
@@ -267,25 +267,21 @@ function renderPromos() {
     let visibleCount = 0;
 
     allPromos.forEach(p => {
-        // Hilangkan dari tampilan jika sudah digunakan
-        if (usedPromos.includes(p.id)) return;
+        // Hilangkan dari tampilan jika sudah digunakan ATAU statusnya expired (tidak tersedia)
+        if (usedPromos.includes(p.id) || p.status === 'expired') return;
         
         visibleCount++;
-        let isExpired = p.status === 'expired';
         
-        let statusHTML = isExpired 
-            ? `<div style="background:#f2f2f2; color:#888; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; border:1px solid #aaa;">TIDAK TERSEDIA</div>`
-            : `<div style="background:#eafaf1; color:#2ecc71; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; border:1px solid #2ecc71;">TERSEDIA</div>`;
-        
-        let onClickHTML = isExpired ? `` : `onclick="applyPromoSelection('${p.id}', ${p.discount})"`;
-        let cursorStyle = isExpired ? `cursor: default; opacity: 0.6; filter: grayscale(100%);` : `cursor: pointer;`;
+        let statusHTML = `<div style="background:#eafaf1; color:#2ecc71; padding:8px 15px; border-radius:20px; font-weight:bold; font-size:12px; border:1px solid #2ecc71;">TERSEDIA</div>`;
+        let onClickHTML = `onclick="applyPromoSelection('${p.id}', ${p.discount})"`;
+        let cursorStyle = `cursor: pointer;`;
 
         container.innerHTML += `
         <div class="promo-card-item" style="${cursorStyle} margin-bottom:15px;" ${onClickHTML}>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <span class="promo-label" style="color:${isExpired ? '#888' : '#ffeb00'}">${p.title}</span>
-                    <div class="promo-code-box" style="padding: 10px; font-size: 20px; color:${isExpired ? '#888' : '#fff'};">${p.id}</div>
+                    <span class="promo-label" style="color:#ffeb00">${p.title}</span>
+                    <div class="promo-code-box" style="padding: 10px; font-size: 20px; color:#fff;">${p.id}</div>
                     <p style="color: #aaa; font-size: 12px; margin: 0;">${p.desc}</p>
                 </div>
                 ${statusHTML}
@@ -298,7 +294,6 @@ function renderPromos() {
     }
 }
 
-// REVISI: Logika "Pilih" bukan "Ketik"
 function applyPromoSelection(code, discountValue) {
     isPromoApplied = true;
     appliedPromoAmount = discountValue;
@@ -360,7 +355,6 @@ function pilihLokasi(alamatText, lat = null, lng = null) {
     document.getElementById('input-cari-lokasi').value = ''; 
     document.getElementById('lokasi-suggestions').style.display = 'none'; 
     
-    // REVISI: Aktifkan Tombol
     isAddressSelected = true;
     let btnProses = document.getElementById('btn-proses-pesanan');
     btnProses.disabled = false;
@@ -842,14 +836,12 @@ function tampilkanPopupTerimaKasih() {
     }, 4000);
 }
 
-// REVISI: Logika Promo Terhapus saat Pesanan Selesai
 function rateResto(num) {
     const stars = document.querySelectorAll('#stars-resto span');
     stars.forEach((star, index) => star.classList.toggle('active', index < num));
     setTimeout(() => { 
         allRestaurants.forEach(r => { if (r.name === currentCheckoutResto) r.sold += 1; });
         
-        // Simpan promo yang dipakai ke array agar hilang dari list
         if (isPromoApplied && appliedPromoCode !== "") {
             usedPromos.push(appliedPromoCode);
             renderPromos(); 
@@ -1011,4 +1003,4 @@ function bukaPeta() {
     }, 100);
 }
 
-function tutupPeta() { showPage('page-lokasi'); }
+function tutupPeta() { showPage('page-lokasi'); } 
